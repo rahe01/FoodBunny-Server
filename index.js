@@ -34,6 +34,10 @@ async function run() {
         res.json(result);
 
     })
+    app.get('/food', async(req, res) => {
+        const foods = await foodCollection.find({}).toArray();
+        res.json(foods);
+    })
 
     // Connect the client to the server	(optional starting in v4.7)
     
