@@ -39,15 +39,7 @@ async function run() {
         res.json(foods);
     })
 
-    app.get('/availablefood', async (req, res) => {
-      try {
-        const foods = await foodCollection.find({ "foodStatus": "available" }).toArray();
-        res.json(foods);
-      } catch (error) {
-        console.error("Error fetching food data:", error);
-        res.status(500).json({ message: "Internal server error" });
-      }
-    });
+  
 
     app.get('/sortfoodByExpireDate', async (req, res) => {
       try {
