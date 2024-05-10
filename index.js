@@ -40,13 +40,15 @@ async function run() {
       const updateFood = req.body;
       const updateEmail = req.body.email;
       const updateDate = req.body.requestDate;
+      const updateNotes = req.body.additionalNotes;
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const updateDoc = {
           $set: {
               foodStatus: updateFood.foodStatus,
-              email: updateEmail, // Directly use updateEmail as it already contains the email value
-              requestDate: updateDate // Directly use updateDate as it already contains the requestDate value
+              email: updateEmail, 
+              requestDate: updateDate ,
+              additionalNotes: updateNotes
           }
       };
       const result = await foodCollection.updateOne(filter, updateDoc, options);
@@ -80,9 +82,53 @@ async function run() {
         res.status(500).json({ message: "Internal server error" });
       }
     })
-    
-   
-    
+    app.get('/myFood/:email', async (req, res) => {
+      try {
+          const email = req.params.email;
+          const foods = await foodCollection.find({ "donatorEmail": email }).toArray();
+          res.json(foods);
+      } catch (error) {
+          console.error("Error fetching food data:", error);
+          res.status(500).json({ message: "Internal server error" });
+      }
+  })
+
+  app.delete('/delete/:id', async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const result = await foodCollection.deleteOne(query);
+    res.json(result);
+  })
+
+  app.put("/updatefoodddddd/:id", async (req, res) => {
+    const id = req.params.id;
+    const updateFoodName = req.body.foodName;
+    const updateFoodImage = req.body.foodImage;
+    const updateFoodQuantity = req.body.foodQuantity;
+    const updatePickupLocation = req.body.pickupLocation;
+    const updateExpiredDateTime = req.body.expiredDateTime;
+    const updateNotes = req.body.additionalNotes;
+    const filter = { _id: new ObjectId(id) };
+    const options = { upsert: true };
+    const updateDoc = {
+        $set: {
+            foodName: updateFoodName,
+            foodImage: updateFoodImage,
+            foodQuantity: updateFoodQuantity,
+            pickupLocation: updatePickupLocation,
+            expiredDateTime: updateExpiredDateTime,
+            additionalNotes: updateNotes
+        }
+    };
+    const result = await foodCollection.updateOne(filter, updateDoc, options);
+    res.json(result);
+});
+
+// foodName, foodImage, foodQuantity, pickupLocation, expiredDateTime, additionalNotes
+
+
+
+
     
     
     
