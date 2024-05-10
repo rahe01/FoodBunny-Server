@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion , ObjectId} = require("mongodb");
 require("dotenv").config();
 
 app.use(cors());
@@ -34,6 +34,25 @@ async function run() {
         res.json(result);
 
     })
+
+    app.put('/updatefood/:id', async (req, res) => {
+      const id = req.params.id;
+      const updateFood = req.body;
+      const updateEmail = req.body.email;
+      const updateDate = req.body.requestDate;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+          $set: {
+              foodStatus: updateFood.foodStatus,
+              email: updateEmail, // Directly use updateEmail as it already contains the email value
+              requestDate: updateDate // Directly use updateDate as it already contains the requestDate value
+          }
+      };
+      const result = await foodCollection.updateOne(filter, updateDoc, options);
+      res.json(result);
+  });
+  
     app.get('/food', async(req, res) => {
         const foods = await foodCollection.find({}).toArray();
         res.json(foods);
@@ -50,6 +69,17 @@ async function run() {
         res.status(500).json({ message: "Internal server error" });
       }
     });
+
+    app.get('/foodDetails/:id' , async (req, res) => {
+      try {
+        const id = req.params.id;
+        const food = await foodCollection.findOne({ _id: new ObjectId(id) });
+        res.json(food);
+      } catch (error) {
+        console.error("Error fetching food data:", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    })
     
    
     
