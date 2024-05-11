@@ -1,11 +1,17 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require('jsonwebtoken');
 const app = express();
+const cookieParser = require('cookie-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173' , ],
+  credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 const port = process.env.PORT || 5000;
 
@@ -20,11 +26,89 @@ const client = new MongoClient(uri, {
   },
 });
 
+
+const logger =  (req, res, next) => {
+
+  console.log(`${req.method} ${req.path} ${req.ip}`)
+  next()
+
+  
+}
+
+const verifyJWT = (req, res, next) => {
+  const token = req.cookies?.tokennn
+  console.log(token, 'in middle')
+
+  if (!token) {
+    return res.status(401).send({ success: false, message: 'unauthorized access' })
+  }
+  jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ success: false, message: 'unauthorized access' })
+    }
+    req.user = decoded
+    
+    next()
+  })
+
+
+
+  
+}
+
+
+
+
+
+
 async function run() {
   try {
     await client.connect();
 
     const foodCollection = client.db("foodBunny").collection("food");
+
+
+    // auth api
+    app.post('/jwt' ,  async (req, res) => {
+      const user = req.body
+      console.log(user)
+      
+      console.log(req.cookies)
+      const token = jwt.sign(user, process.env.ACCESS_SECRET_TOKEN , { expiresIn: '1h' })
+      res
+      .cookie('tokennn', token, {
+        httpOnly: true,
+        secure: true,
+        sameSite:'none',
+        
+        
+      })
+      .send({'success': true,})
+    })
+
+    app.post('/logout', async (req, res) => {
+       const user = req.body
+      console.log('logout')
+       res
+       .clearCookie('tokennn', {maxAge:0})
+       .send({'success': true,})
+    })
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
     // Food api
 
     app.post("/addfood", async (req, res) => {
@@ -82,9 +166,14 @@ async function run() {
         res.status(500).json({ message: "Internal server error" });
       }
     });
-    app.get("/myFood/:email", async (req, res) => {
+    app.get("/myFood/:email",  verifyJWT, async (req, res) => {
+      console.log('tokennnn' , req.cookies.tokennn)
+      if(req.user.email !== req.params.email){
+        return res.status(403).send({success: false, message: 'forbidden access'})
+      }
       try {
         const email = req.params.email;
+        
         const foods = await foodCollection
           .find({ donatorEmail: email })
           .toArray();
@@ -131,7 +220,7 @@ async function run() {
     const query = { email: email };
     const cursor = foodCollection.find(query);
     const food = await cursor.toArray();
-    res.send(food);
+    res.send(food);    
   })
 
     // Connect the client to the server	(optional starting in v4.7)
