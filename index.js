@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const { MongoClient, ServerApiVersion , ObjectId} = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 app.use(cors());
@@ -27,15 +27,14 @@ async function run() {
     const foodCollection = client.db("foodBunny").collection("food");
     // Food api
 
-    app.post('/addfood', async(req, res) => {
-        const newFood = req.body;
-        const result = await foodCollection.insertOne(newFood);
-        console.log(result);
-        res.json(result);
+    app.post("/addfood", async (req, res) => {
+      const newFood = req.body;
+      const result = await foodCollection.insertOne(newFood);
+      console.log(result);
+      res.json(result);
+    });
 
-    })
-
-    app.put('/updatefood/:id', async (req, res) => {
+    app.put("/updatefood/:id", async (req, res) => {
       const id = req.params.id;
       const updateFood = req.body;
       const updateEmail = req.body.email;
@@ -44,27 +43,28 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const updateDoc = {
-          $set: {
-              foodStatus: updateFood.foodStatus,
-              email: updateEmail, 
-              requestDate: updateDate ,
-              additionalNotes: updateNotes
-          }
+        $set: {
+          foodStatus: updateFood.foodStatus,
+          email: updateEmail,
+          requestDate: updateDate,
+          additionalNotes: updateNotes,
+        },
       };
       const result = await foodCollection.updateOne(filter, updateDoc, options);
       res.json(result);
-  });
-  
-    app.get('/food', async(req, res) => {
-        const foods = await foodCollection.find({}).toArray();
-        res.json(foods);
-    })
+    });
 
-  
+    app.get("/food", async (req, res) => {
+      const foods = await foodCollection.find({}).toArray();
+      res.json(foods);
+    });
 
-    app.get('/sortfoodByExpireDate', async (req, res) => {
+    app.get("/sortfoodByExpireDate", async (req, res) => {
       try {
-        const foods = await foodCollection.find({ "foodStatus": "available" }).sort({ expiredDateTime: 1 }).toArray();
+        const foods = await foodCollection
+          .find({ foodStatus: "available" })
+          .sort({ expiredDateTime: 1 })
+          .toArray();
         res.json(foods);
       } catch (error) {
         console.error("Error fetching food data:", error);
@@ -72,7 +72,7 @@ async function run() {
       }
     });
 
-    app.get('/foodDetails/:id' , async (req, res) => {
+    app.get("/foodDetails/:id", async (req, res) => {
       try {
         const id = req.params.id;
         const food = await foodCollection.findOne({ _id: new ObjectId(id) });
@@ -81,60 +81,61 @@ async function run() {
         console.error("Error fetching food data:", error);
         res.status(500).json({ message: "Internal server error" });
       }
-    })
-    app.get('/myFood/:email', async (req, res) => {
+    });
+    app.get("/myFood/:email", async (req, res) => {
       try {
-          const email = req.params.email;
-          const foods = await foodCollection.find({ "donatorEmail": email }).toArray();
-          res.json(foods);
+        const email = req.params.email;
+        const foods = await foodCollection
+          .find({ donatorEmail: email })
+          .toArray();
+        res.json(foods);
       } catch (error) {
-          console.error("Error fetching food data:", error);
-          res.status(500).json({ message: "Internal server error" });
+        console.error("Error fetching food data:", error);
+        res.status(500).json({ message: "Internal server error" });
       }
-  })
+    });
 
-  app.delete('/delete/:id', async (req, res) => {
-    const id = req.params.id;
-    const query = { _id: new ObjectId(id) };
-    const result = await foodCollection.deleteOne(query);
-    res.json(result);
-  })
+    app.delete("/delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await foodCollection.deleteOne(query);
+      res.json(result);
+    });
 
-  app.put("/updatefoodddddd/:id", async (req, res) => {
-    const id = req.params.id;
-    const updateFoodName = req.body.foodName;
-    const updateFoodImage = req.body.foodImage;
-    const updateFoodQuantity = req.body.foodQuantity;
-    const updatePickupLocation = req.body.pickupLocation;
-    const updateExpiredDateTime = req.body.expiredDateTime;
-    const updateNotes = req.body.additionalNotes;
-    const filter = { _id: new ObjectId(id) };
-    const options = { upsert: true };
-    const updateDoc = {
+    app.put("/updatefoodddddd/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateFoodName = req.body.foodName;
+      const updateFoodImage = req.body.foodImage;
+      const updateFoodQuantity = req.body.foodQuantity;
+      const updatePickupLocation = req.body.pickupLocation;
+      const updateExpiredDateTime = req.body.expiredDateTime;
+      const updateNotes = req.body.additionalNotes;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
         $set: {
-            foodName: updateFoodName,
-            foodImage: updateFoodImage,
-            foodQuantity: updateFoodQuantity,
-            pickupLocation: updatePickupLocation,
-            expiredDateTime: updateExpiredDateTime,
-            additionalNotes: updateNotes
-        }
-    };
-    const result = await foodCollection.updateOne(filter, updateDoc, options);
-    res.json(result);
-});
+          foodName: updateFoodName,
+          foodImage: updateFoodImage,
+          foodQuantity: updateFoodQuantity,
+          pickupLocation: updatePickupLocation,
+          expiredDateTime: updateExpiredDateTime,
+          additionalNotes: updateNotes,
+        },
+      };
+      const result = await foodCollection.updateOne(filter, updateDoc, options);
+      res.json(result);
+    });
 
-// foodName, foodImage, foodQuantity, pickupLocation, expiredDateTime, additionalNotes
-
-
-
-
-    
-    
-    
+  app.get('/requestFooood/:email' , async (req, res) =>{
+    const email = req.params.email;
+    const query = { email: email };
+    const cursor = foodCollection.find(query);
+    const food = await cursor.toArray();
+    res.send(food);
+  })
 
     // Connect the client to the server	(optional starting in v4.7)
-    
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
