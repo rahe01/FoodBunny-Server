@@ -184,6 +184,18 @@ async function run() {
       }
     });
 
+    
+  app.get('/requestFooood/:email' , verifyJWT, async (req, res) =>{
+    if(req.user.email !== req.params.email){
+      return res.status(403).send({success: false, message: 'forbidden access'})
+    }
+    const email = req.params.email;
+    const query = { email: email };
+    const cursor = foodCollection.find(query);
+    const food = await cursor.toArray();
+    res.send(food);    
+  })
+
     app.delete("/delete/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
